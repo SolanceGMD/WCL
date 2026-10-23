@@ -1,14 +1,45 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0b0d14" />
-    <meta name="description" content="Wave Challenge List — discover, submit, and track Geometry Dash wave challenges." />
-    <title>WCL — Wave Challenge List</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b0d14">
+  <meta name="description" content="WCL — the community-driven Geometry Dash Wave Challenge List. Browse challenges, submit completions, earn points, and climb the leaderboard.">
+  <meta property="og:title" content="WCL — Wave Challenge List">
+  <meta property="og:description" content="Push your limits. Own the wave.">
+  <title>WCL — Wave Challenge List</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script>window.WCL_CONFIG={supabaseUrl:"https://xvdinlyertutpddeilvq.supabase.co",supabaseKey:"sb_publishable_J0xpFgrZCYfTFY15AsHAFA_QYjZzyMB"};</script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="WCL home"><span class="brand-mark"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span><span class="brand-copy">WCL<span class="brand-period">.</span><small>WAVE CHALLENGE LIST</small></span></a>
+      <nav class="main-nav" id="main-nav" aria-label="Main navigation"><button class="nav-link active" data-tab="Levels">Levels</button><button class="nav-link" data-tab="Rankings">Rankings</button><button class="nav-link" data-tab="Submissions">Submissions</button><button class="nav-link" data-tab="About">About</button><button class="nav-link hidden" data-tab="Admin" id="admin-nav">Admin</button></nav>
+      <div class="top-actions"><button class="button button-ghost login-button" id="auth-button">Sign in</button><button class="button button-primary header-submit" id="submit-level-top">＋ Submit level</button><button class="icon-button mobile-menu" id="mobile-menu" aria-label="Toggle menu">☰</button></div>
+    </header>
+    <main id="top">
+      <section class="hero">
+        <div class="hero-copy"><div class="eyebrow"><span class="live-dot"></span> THE COMMUNITY-DRIVEN WAVE RANKING</div><h1>Push your limits.<br><span>Own the wave.</span></h1><p class="hero-description">Your home for Geometry Dash wave challenges. Find your next wall, prove your runs, earn points, and climb the rankings.</p><div class="hero-actions"><button class="button button-primary button-large" id="explore-button">Explore challenges ↗</button><button class="button button-outline button-large" id="submit-level-hero">＋ Submit a challenge</button></div><div class="hero-social-proof"><div class="avatar-stack"><span>W</span><span>G</span><span>D</span><span>+</span></div><span><b>Built by players, for players.</b><br>Every run counts.</span></div></div>
+        <div class="hero-art" aria-label="Abstract neon wave artwork"><div class="art-grid"></div><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><div class="wave-line wave-line-back"></div><div class="wave-line"></div><div class="wave-core"><svg width="74" height="74" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h6l-1 8 11-13h-7z"/></svg></div><div class="art-tag tag-top"><span class="tag-icon">ϟ</span><span><small>TOP CHALLENGE</small><b id="top-challenge-name">Loading levels…</b></span></div><div class="art-tag tag-bottom">♛ <span><small>LEADERBOARD</small><b>Climb the ranks</b></span> ↗</div><div class="art-spark spark-one">✳</div><div class="art-spark spark-two">✦</div></div>
+      </section>
+      <section class="stats-grid" id="stats-grid" aria-label="Community statistics"><article class="stat-card"><div class="stat-top">◈ &nbsp; CHALLENGES</div><div class="stat-value" id="stat-levels">—</div><div class="stat-foot">Published levels</div></article><article class="stat-card"><div class="stat-top">♙ &nbsp; PLAYERS</div><div class="stat-value" id="stat-players">—</div><div class="stat-foot">Community members</div></article><article class="stat-card"><div class="stat-top">✓ &nbsp; COMPLETIONS</div><div class="stat-value" id="stat-completions">—</div><div class="stat-foot">Approved runs</div></article><article class="stat-card"><div class="stat-top">ϟ &nbsp; POINTS AWARDED</div><div class="stat-value" id="stat-points">—</div><div class="stat-foot">Earned by players</div></article></section>
+      <section id="view-levels" class="challenge-section">
+        <div class="section-heading"><div><div class="eyebrow section-eyebrow">FIND YOUR NEXT WALL</div><h2>Wave challenges <span class="heading-count" id="level-count">0</span></h2><p>Every level is a new chance to prove your skill.</p></div><button class="text-link" id="refresh-levels">↻ Refresh list</button></div>
+        <div class="list-toolbar"><label class="search-field"><span>⌕</span><input id="level-search" type="search" placeholder="Search levels or creators…" autocomplete="off"><kbd>/</kbd></label><div class="toolbar-filters"><label class="select-wrap">▽ <select id="difficulty-filter" aria-label="Filter by difficulty"><option>All difficulties</option><option>Extreme</option><option>Insane</option><option>Hard</option><option>Medium</option><option>Easy</option><option>Unrated</option></select></label><label class="select-wrap">↕ <select id="sort-filter" aria-label="Sort levels"><option value="rank">Rank</option><option value="points">Points: high to low</option><option value="name">Name: A–Z</option><option value="newest">Recently added</option></select></label></div></div>
+        <div class="level-table-wrap"><div class="level-table-head"><span>CHALLENGE / CREATOR</span><span>DIFFICULTY</span><span>REWARD</span><span>STATUS</span><span></span></div><div id="level-rows"><div class="empty-state"><b>Loading the list…</b><span>Connecting to the WCL database.</span></div></div></div><div class="list-footer"><span id="list-footer-count">Loading levels…</span><button class="button button-outline" id="submit-completion-footer">Submit a completion ↗</button></div>
+      </section>
+      <section id="view-rankings" class="challenge-section alternate-section hidden"><div class="section-heading"><div><div class="eyebrow section-eyebrow">THE PLAYERS TO BEAT</div><h2>Community rankings</h2><p>Points are awarded after a completion is approved by moderators.</p></div><button class="text-link" id="refresh-rankings">↻ Refresh</button></div><div class="leaderboard" id="leaderboard"><div class="empty-state"><b>Loading rankings…</b></div></div><div class="notice">ⓘ Rankings use verified points from approved completion submissions.</div></section>
+      <section id="view-submissions" class="challenge-section alternate-section hidden"><div class="section-heading"><div><div class="eyebrow section-eyebrow">HELP BUILD THE LIST</div><h2>Community submissions</h2><p>Submit a challenge for review, or send proof of your completed run.</p></div></div><div class="submission-cards"><button class="submission-card" id="submit-level-card"><span class="submission-icon">＋</span><h3>Submit a level</h3><p>Suggest a Geometry Dash wave challenge with its creator, description, difficulty, points, and YouTube showcase. A moderator reviews it before publication.</p><span class="text-link">Start a level submission ↗</span></button><button class="submission-card" id="submit-completion-card"><span class="submission-icon green">✓</span><h3>Submit a completion</h3><p>Share your proof video for a listed challenge. Approved completions earn the level's points, and duplicate awards are blocked.</p><span class="text-link">Submit proof video ↗</span></button></div><div id="my-submissions" class="my-submissions"></div></section>
+      <section id="view-about" class="challenge-section alternate-section hidden"><div class="section-heading"><div><div class="eyebrow section-eyebrow">ABOUT THE PROJECT</div><h2>Built for the wave community</h2><p>Clear rules. Verified completions. Community-driven challenge discovery.</p></div></div><div class="about-grid"><div><span>⌕</span><h3>Find your next challenge</h3><p>Search and filter the list by difficulty, creator, and points. Each listing can include a YouTube showcase.</p></div><div><span>✓</span><h3>Proof before points</h3><p>Completion proof is reviewed by authorized moderators. Points are only awarded after approval, not on submission.</p></div><div><span>♜</span><h3>Accountable moderation</h3><p>Granular moderator permissions, reversible level removal, user bans, and an audit history keep moderation transparent.</p></div></div></section>
+      <section id="view-admin" class="challenge-section alternate-section hidden"><div class="section-heading"><div><div class="eyebrow section-eyebrow">STAFF AREA</div><h2>Moderation dashboard</h2><p>Review queues, edit challenge data, manage roles and bans, and inspect audit events.</p></div><button class="text-link" id="refresh-admin">↻ Refresh queue</button></div><div id="admin-content"><div class="empty-state"><b>Checking permissions…</b></div></div></section>
+      <section class="bottom-cta"><div class="cta-orb">ϟ</div><div><h2>Your next personal best starts here.</h2><p>Find a challenge, upload your proof, and earn your place on the board.</p></div><button class="button button-primary" id="cta-submit">Get started ↗</button></section>
+    </main>
+    <footer class="footer"><a class="brand footer-brand" href="#top"><span class="brand-mark">ϟ</span><span class="brand-copy">WCL<span class="brand-period">.</span><small>WAVE CHALLENGE LIST</small></span></a><span>Community-made fan project · Not affiliated with RobTop Games.</span><div class="footer-links"><a href="https://github.com/SolanceGMD/WCL" target="_blank" rel="noreferrer">GitHub ↗</a><button id="footer-auth">Account</button></div></footer>
+  </div>
+  <div id="modal-root"></div><div id="toast-root" aria-live="polite"></div><div class="demo-indicator" id="connection-indicator"><span></span> CONNECTING TO WCL</div>
+</body>
 </html>
