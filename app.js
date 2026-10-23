@@ -236,8 +236,24 @@ async function renderAdminUsers() {
 }
 function manageUser(role,profile) {
   const permissions=["levels.manage","submissions.review","users.manage","audit.view","points.adjust"];
-  modal('<button class="icon-button modal-close" aria-label="Close">×</button><div class="eyebrow section-eyebrow">USER & ROLE MANAGEMENT</div><h2>'+escapeHtml(profile.gd_username||"Player")+'</h2><p class="modal-description">'+escapeHtml(role.user_id)+'</p><form id="manage-user-form"><label class="field-label">Role<select name="role">'+["player","moderator","admin"].map(r=>'<option '+(role.role===r?"selected":"")+'>'+r+'</option>').join("")+'</select></label><div class="permission-list"><b>Moderator permissions</b>'+permissions.map(p=>'<label><input type="checkbox" name="perm:'+p+'" '+(role.permissions?.[p]===true?"checked":"")+'> '+escapeHtml(p)+'</label>').join("")+'</div><label class="field-label">Ban reason (leave blank to unban)<textarea name="ban_reason" rows="2">'+escapeHtml(role.ban_reason||"")+'</textarea></label><button class="button button-primary modal-submit" type="submit">Save permissions</button></form>');
-  $("#manage-user-form").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.currentTarget),perms={};permissions.forEach(p=>perms[p]=fd.get("perm:"+p)==="on");const banReason=String(fd.get("ban_reason")||"").trim();const payload={role:fd.get("role"),permissions:perms,banned_at:banReason?new Date().toISOString():null,ban_reason:banReason||null,updated_at:new Date().toISOString()};const {error}=await supabase.from("user_roles").update(payload).eq("user_id",role.user_id);if(error)return showError(error);closeModal();toast("User permissions saved.");await loadAdmin();};
+  const pointsFields=hasPermission("points.adjust")?'<div class="form-grid"><label class="field-label">Point adjustment (+/-)<input type="number" name="points_delta" step="1" min="-1000000" max="1000000" value="0"></label><label class="field-label">Reason for adjustment<input name="points_reason" minlength="3" maxlength="1000" placeholder="Required if changing points"></label></div>':"";
+  modal('<button class="icon-button modal-close" aria-label="Close">×</button><div class="eyebrow section-eyebrow">USER & ROLE MANAGEMENT</div><h2>'+escapeHtml(profile.gd_username||"Player")+'</h2><p class="modal-description">'+escapeHtml(role.user_id)+'</p><form id="manage-user-form"><label class="field-label">Role<select name="role">'+["player","moderator","admin"].map(r=>'<option '+(role.role===r?"selected":"")+'>'+r+'</option>').join("")+'</select></label><div class="permission-list"><b>Moderator permissions</b>'+permissions.map(p=>'<label><input type="checkbox" name="perm:'+p+'" '+(role.permissions?.[p]===true?"checked":"")+'> '+escapeHtml(p)+'</label>').join("")+'</div>'+pointsFields+'<label class="field-label">Ban reason (leave blank to unban)<textarea name="ban_reason" rows="2">'+escapeHtml(role.ban_reason||"")+'</textarea></label><button class="button button-primary modal-submit" type="submit">Save user settings</button></form>');
+  $("#manage-user-form").onsubmit=async e=>{
+    e.preventDefault();const fd=new FormData(e.currentTarget),perms={};permissions.forEach(p=>perms[p]=fd.get("perm:"+p)==="on");
+    const delta=Number(fd.get("points_delta")||0),reason=String(fd.get("points_reason")||"").trim();
+    if(delta!==0&&!hasPermission("points.adjust"))return toast("Missing points.adjust permission.",true);
+    if(delta!==0&&reason.length<3)return toast("Add a reason for the points adjustment.",true);
+    const banReason=String(fd.get("ban_reason")||"").trim();
+    const payload={role:fd.get("role"),permissions:perms,banned_at:banReason?new Date().toISOString():null,ban_reason:banReason||null,updated_at:new Date().toISOString()};
+    const btn=$("button[type=submit]",e.currentTarget);btn.disabled=true;btn.textContent="Saving…";
+    const {error}=await supabase.from("user_roles").update(payload).eq("user_id",role.user_id);
+    if(error){btn.disabled=false;btn.textContent="Save user settings";return showError(error);}
+    if(delta!==0){
+      const {error:pointsError}=await supabase.rpc("wcl_adjust_points",{p_user_id:role.user_id,p_delta:delta,p_reason:reason});
+      if(pointsError){closeModal();await loadAdmin();return showError(pointsError,"Role settings saved, but the points adjustment failed.");}
+    }
+    closeModal();toast("User settings saved.");await loadAdmin();
+  };
 }
 async function renderAdminAudit() {
   if(!hasPermission("audit.view")){$("#admin-panel").innerHTML=empty("Missing permission","Your account does not have audit.view.");return;}
