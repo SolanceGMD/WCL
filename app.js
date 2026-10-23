@@ -196,15 +196,10 @@ async function renderAdminQueue() {
 }
 async function reviewLevel(id,status) {
   if(!hasPermission("submissions.review"))return toast("Missing review permission.",true);
-  const note = status==="rejected" ? prompt("Reason for rejection (optional):") : "";
+  const note=status==="rejected"?prompt("Reason for rejection (optional):"):"";
   if(status==="rejected"&&note===null)return;
-  const {data:s,error}=await supabase.from("level_submissions").select("*").eq("id",id).single();if(error)return showError(error);
-  if(status==="approved") {
-    const {error:insertError}=await supabase.from("levels").insert({name:s.name,creator:s.creator,description:s.description,points:s.suggested_points,difficulty:s.difficulty,length:s.length,youtube_url:s.youtube_url,status:"published",created_by:s.submitter_id});
-    if(insertError)return showError(insertError);
-  }
-  const {error:updateError}=await supabase.from("level_submissions").update({status,reviewer_id:state.session.user.id,reviewed_at:new Date().toISOString(),review_note:note||null}).eq("id",id);
-  if(updateError)return showError(updateError);
+  const {error}=await supabase.rpc("wcl_review_level_submission",{p_submission_id:id,p_status:status,p_note:note||null});
+  if(error)return showError(error);
   toast("Level submission "+status+".");await loadAdmin();await loadLevels();
 }
 async function reviewRun(id,status) {
