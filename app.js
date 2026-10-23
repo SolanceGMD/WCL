@@ -195,12 +195,12 @@ async function reviewLevel(id,status) {
   const note = status==="rejected" ? prompt("Reason for rejection (optional):") : "";
   if(status==="rejected"&&note===null)return;
   const {data:s,error}=await supabase.from("level_submissions").select("*").eq("id",id).single();if(error)return showError(error);
+  if(status==="approved") {
+    const {error:insertError}=await supabase.from("levels").insert({name:s.name,creator:s.creator,description:s.description,points:s.suggested_points,difficulty:s.difficulty,length:s.length,youtube_url:s.youtube_url,status:"published",created_by:s.submitter_id});
+    if(insertError)return showError(insertError);
+  }
   const {error:updateError}=await supabase.from("level_submissions").update({status,reviewer_id:state.session.user.id,reviewed_at:new Date().toISOString(),review_note:note||null}).eq("id",id);
   if(updateError)return showError(updateError);
-  if(status==="approved") {
-    const {error:insertError}=await supabase.from("levels").insert({name:s.name,creator:s.creator,description:s.description,suggested_points:s.suggested_points,points:s.suggested_points,difficulty:s.difficulty,length:s.length,youtube_url:s.youtube_url,status:"published",created_by:s.submitter_id});
-    if(insertError){toast("Submission marked approved but level creation failed: "+insertError.message,true);return;}
-  }
   toast("Level submission "+status+".");await loadAdmin();await loadLevels();
 }
 async function reviewRun(id,status) {
