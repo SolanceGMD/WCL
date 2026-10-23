@@ -99,6 +99,17 @@ function openAuth(mode = "signin") {
   const signup = mode === "signup";
   modal('<button class="icon-button modal-close" aria-label="Close">×</button><div class="modal-icon">♙</div><div class="eyebrow section-eyebrow">PLAYER ACCOUNT</div><h2>' + (signup ? "Join the wave." : "Welcome back.") + '</h2><p class="modal-description">' + (signup ? "Create your account to submit levels, prove completions, and track points." : "Sign in to manage submissions and see your player account.") + '</p><form id="auth-form">' + (signup ? '<label class="field-label">Geometry Dash username<input name="gd_username" minlength="1" maxlength="32" required placeholder="Your GD username"></label>' : '') + '<label class="field-label">Email address<input type="email" name="email" autocomplete="email" required placeholder="you@example.com"></label><label class="field-label">Password<input type="password" name="password" minlength="8" autocomplete="' + (signup ? "new-password" : "current-password") + '" required placeholder="At least 8 characters"></label><button class="button button-primary modal-submit" type="submit">' + (signup ? "Create account" : "Sign in") + '</button></form><p class="modal-description" style="margin:16px 0 0">' + (signup ? 'Already registered? <button type="button" class="text-link" id="switch-auth">Sign in</button>' : 'New to WCL? <button type="button" class="text-link" id="switch-auth">Create an account</button>') + '</p>');
   $("#switch-auth").onclick = () => openAuth(signup ? "signin" : "signup");
+  if(!signup) {
+    const forgot=document.createElement("button");forgot.type="button";forgot.className="text-link";forgot.textContent="Forgot password?";
+    forgot.style.marginTop="10px";forgot.onclick=async()=>{
+      const email=String($('input[name="email"]', $("#auth-form")).value||"").trim();
+      if(!email)return toast("Enter your email address first.",true);
+      const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+      if(error)return showError(error);
+      toast("Password reset link sent. Check your email.");closeModal();
+    };
+    $("#auth-form").appendChild(forgot);
+  }
   $("#auth-form").onsubmit = async e => {
     e.preventDefault(); if (!requireBackend()) return;
     const fd = new FormData(e.currentTarget), email = String(fd.get("email")).trim(), password = String(fd.get("password"));
@@ -115,6 +126,10 @@ function openAuth(mode = "signin") {
       await loadIdentity(); closeModal(); await loadLevels(); toast("You're signed in.");
     } catch (err) { showError(err); button.disabled = false; button.textContent = signup ? "Create account" : "Sign in"; }
   };
+}
+function openPasswordReset() {
+  modal('<button class="icon-button modal-close" aria-label="Close">×</button><div class="modal-icon">♙</div><div class="eyebrow section-eyebrow">ACCOUNT SECURITY</div><h2>Choose a new password.</h2><p class="modal-description">Use at least 8 characters. Your new password will replace the old one.</p><form id="password-reset-form"><label class="field-label">New password<input type="password" name="password" minlength="8" autocomplete="new-password" required></label><label class="field-label">Confirm new password<input type="password" name="confirm" minlength="8" autocomplete="new-password" required></label><button class="button button-primary modal-submit" type="submit">Update password</button></form>');
+  $("#password-reset-form").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.currentTarget),password=String(fd.get("password")),confirm=String(fd.get("confirm"));if(password!==confirm)return toast("Passwords do not match.",true);const {error}=await supabase.auth.updateUser({password});if(error)return showError(error);closeModal();toast("Password updated successfully.");};
 }
 function openAccount() {
   if (!state.session) return openAuth("signin");
@@ -272,7 +287,7 @@ async function boot() {
   if (!supabase) { indicator("Backend not configured",false); $("#level-rows").innerHTML=empty("Backend setup required","Set a Supabase URL and publishable key in app.js.");return; }
   try {
     await loadIdentity();
-    supabase.auth.onAuthStateChange((_event,session)=>{state.session=session;setTimeout(async()=>{try{await loadIdentity();await loadLevels();}catch(e){showError(e);}},0);});
+    supabase.auth.onAuthStateChange((event,session)=>{state.session=session;if(event==="PASSWORD_RECOVERY"){setTimeout(openPasswordReset,0);return;}setTimeout(async()=>{try{await loadIdentity();await loadLevels();}catch(e){showError(e);}},0);});
     await loadLevels();
     if(state.session && state.role?.banned_at) toast("This account is banned: "+(state.role.ban_reason||"no reason provided"),true);
   } catch(e) { indicator("Connection issue",false); showError(e,"Could not connect to the WCL database."); $("#level-rows").innerHTML=empty("Could not load challenges","Check the Supabase connection and database setup."); }
