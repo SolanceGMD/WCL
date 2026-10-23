@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import type { FormEvent, ReactNode } from "react";
 import {
   Activity, ArrowDownUp, ArrowRight, BadgeCheck, BarChart3, Check,
   ChevronDown, CircleHelp, Clock3, Flame, Gauge, Github, LogIn, Menu,
@@ -58,7 +59,7 @@ export default function App() {
     window.setTimeout(() => setToast(null), 3200);
   }
 
-  function submitLevel(event: React.FormEvent<HTMLFormElement>) {
+  function submitLevel(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!draft.name.trim() || !draft.creator.trim()) return;
     const level: Level = {
@@ -74,7 +75,7 @@ export default function App() {
     notify("Submission added to this preview. Connect Supabase to persist and moderate it.");
   }
 
-  function submitCompletion(event: React.FormEvent<HTMLFormElement>) {
+  function submitCompletion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!completion.video.trim()) return;
     setModal(null);
@@ -177,6 +178,6 @@ export default function App() {
   );
 }
 
-function Stat({ icon, label, value, foot }: { icon: React.ReactNode; label: string; value: string; foot: string }) {
+function Stat({ icon, label, value, foot }: { icon: ReactNode; label: string; value: string; foot: string }) {
   return <div className="stat-card"><div className="stat-top"><span className="stat-icon">{icon}</span><span>{label}</span></div><div className="stat-value">{value}</div><div className="stat-foot"><span />{foot}</div></div>;
 }
