@@ -293,6 +293,10 @@ async function boot() {
     await loadIdentity();
     supabase.auth.onAuthStateChange((event,session)=>{state.session=session;if(event==="PASSWORD_RECOVERY"){setTimeout(openPasswordReset,0);return;}setTimeout(async()=>{try{await loadIdentity();await loadLevels();}catch(e){showError(e);}},0);});
     await loadLevels();
+    if (new URLSearchParams(window.location.search).get("admin") === "1") {
+      if (isStaff()) switchTab("Admin");
+      else toast("Sign in with an administrator or moderator account to open staff tools.", true);
+    }
     if(state.session && state.role?.banned_at) toast("This account is banned: "+(state.role.ban_reason||"no reason provided"),true);
   } catch(e) { indicator("Connection issue",false); showError(e,"Could not connect to the WCL database."); $("#level-rows").innerHTML=empty("Could not load challenges","Check the Supabase connection and database setup."); }
 }
