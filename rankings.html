@@ -1,1 +1,44 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WCL Rankings</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="pointercrate.css?v=20261023"></head><body><main class="page-main"><p class="eyebrow">WAVE CHALLENGE LIST</p><h1>Player rankings</h1><p class="intro">Verified points earned from approved completions.</p><p><a href="index.html">List</a> · <a href="submissions.html">Submissions</a> · <a href="about.html">About</a> · <a href="admin.html">Staff</a></p><button id="refresh" class="button button-outline">Refresh</button><section id="leaderboard" class="ranking-table">Loading…</section></main><script>window.WCL_CONFIG={supabaseUrl:"https://xvdinlyertutpddeilvq.supabase.co",supabaseKey:"sb_publishable_J0xpFgrZCYfTFY15AsHAFA_QYjZzyMB"};</script><script type="module" src="rankings.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f3f5f8">
+  <meta name="description" content="See the top players in the Geometry Dash Wave Challenge List, ranked by verified completion points.">
+  <title>Player Rankings — WCL</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="pointercrate.css?v=20261024">
+</head>
+<body>
+  <header class="standalone-header">
+    <a class="standalone-brand" href="index.html" aria-label="WCL home"><span class="standalone-brand-mark">〽</span><span><b>WCL<span>.</span></b><small>WAVE CHALLENGE LIST</small></span></a>
+    <nav class="standalone-nav" aria-label="Main navigation">
+      <a href="index.html">Challenge list</a>
+      <a class="active" href="rankings.html" aria-current="page">Rankings</a>
+      <a href="submissions.html">Submissions</a>
+      <a href="about.html">About</a>
+    </nav>
+    <a class="button button-primary standalone-back" href="index.html">← Back to list</a>
+  </header>
+  <main class="page-main rankings-page">
+    <a class="back-link" href="index.html">← Back to the challenge list</a>
+    <p class="eyebrow">WAVE CHALLENGE LIST / COMMUNITY</p>
+    <div class="rankings-heading">
+      <div>
+        <h1>Player rankings</h1>
+        <p class="intro">Every approved completion counts. Earn points and climb the leaderboard.</p>
+      </div>
+      <button id="refresh" class="button button-outline">↻ Refresh rankings</button>
+    </div>
+    <section class="rankings-summary" aria-label="Leaderboard information">
+      <div><span class="summary-icon">♜</span><span><b>Community leaderboard</b><small>Players ordered by total points</small></span></div>
+      <span class="summary-note">Updates when refreshed</span>
+    </section>
+    <section id="leaderboard" class="ranking-table" aria-live="polite" aria-busy="true"><p class="empty-state">Loading player rankings…</p></section>
+    <p class="rankings-footnote">Only points recorded on player accounts are included. Need to submit proof? <a href="index.html#view-submissions">Submit a completion from the main app ↗</a></p>
+  </main>
+  <script>window.WCL_CONFIG={supabaseUrl:"https://xvdinlyertutpddeilvq.supabase.co",supabaseKey:"sb_publishable_J0xpFgrZCYfTFY15AsHAFA_QYjZzyMB"};</script>
+  <script type="module" src="rankings.js"></script>
+</body>
+</html>
