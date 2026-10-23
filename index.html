@@ -18,7 +18,7 @@
     <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
     <header class="topbar">
       <a class="brand" href="#top" aria-label="WCL home"><span class="brand-mark"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span><span class="brand-copy">WCL<span class="brand-period">.</span><small>WAVE CHALLENGE LIST</small></span></a>
-      <nav class="main-nav" id="main-nav" aria-label="Main navigation"><button class="nav-link active" data-tab="Levels">Levels</button><button class="nav-link" data-tab="Rankings">Rankings</button><button class="nav-link" data-tab="Submissions">Submissions</button><button class="nav-link" data-tab="About">About</button><button class="nav-link hidden" data-tab="Admin" id="admin-nav">Admin</button></nav>
+      <nav class="main-nav" id="main-nav" aria-label="Main navigation"><a class="nav-link active" href="index.html">List</a><a class="nav-link" href="rankings.html">Rankings</a><a class="nav-link" href="submissions.html">Submissions</a><a class="nav-link" href="about.html">About</a><a class="nav-link hidden" href="admin.html" id="admin-nav">Admin</a></nav>
       <div class="top-actions"><button class="button button-ghost login-button" id="auth-button">Sign in</button><button class="button button-primary header-submit" id="submit-level-top">＋ Submit level</button><button class="icon-button mobile-menu" id="mobile-menu" aria-label="Toggle menu">☰</button></div>
     </header>
     <main id="top">
@@ -38,7 +38,7 @@
       <section id="view-admin" class="challenge-section alternate-section hidden"><div class="section-heading"><div><div class="eyebrow section-eyebrow">STAFF AREA</div><h2>Moderation dashboard</h2><p>Review queues, edit challenge data, manage roles and bans, and inspect audit events.</p></div><button class="text-link" id="refresh-admin">↻ Refresh queue</button></div><div id="admin-content"><div class="empty-state"><b>Checking permissions…</b></div></div></section>
       <section class="bottom-cta"><div class="cta-orb">ϟ</div><div><h2>Your next personal best starts here.</h2><p>Find a challenge, upload your proof, and earn your place on the board.</p></div><button class="button button-primary" id="cta-submit">Get started ↗</button></section>
     </main>
-    <footer class="footer"><a class="brand footer-brand" href="#top"><span class="brand-mark">ϟ</span><span class="brand-copy">WCL<span class="brand-period">.</span><small>WAVE CHALLENGE LIST</small></span></a><span>Community-made fan project · Not affiliated with RobTop Games.</span><div class="footer-links"><a href="https://github.com/SolanceGMD/WCL" target="_blank" rel="noreferrer">GitHub ↗</a><button id="footer-auth">Account</button></div></footer>
+    <footer class="footer"><a class="brand footer-brand" href="#top"><span class="brand-mark">ϟ</span><span class="brand-copy">WCL<span class="brand-period">.</span><small>WAVE CHALLENGE LIST</small></span></a><span>Community-made fan project · Not affiliated with RobTop Games.</span><div class="footer-links"><a href="rankings.html">Rankings</a><a href="about.html">About</a><a href="https://github.com/SolanceGMD/WCL" target="_blank" rel="noreferrer">GitHub ↗</a><button id="footer-auth">Account</button></div></footer>
   </div>
   <div id="modal-root"></div><div id="toast-root" aria-live="polite"></div><div class="demo-indicator" id="connection-indicator"><span></span> CONNECTING TO WCL</div>
 </body>
