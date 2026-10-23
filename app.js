@@ -53,10 +53,14 @@ async function loadLevels() {
   renderLevels(); renderStats(); indicator("Connected to WCL");
   const { data: people, error: peopleError } = await supabase.from("profiles").select("id,gd_username,points,created_at").order("points", { ascending: false }).limit(100);
   if (!peopleError) { state.rankings = people || []; renderRankings(); }
-  const { count: completions } = await supabase.from("completion_submissions").select("id", { count: "exact", head: true }).eq("status", "approved");
-  const totalPoints = state.rankings.reduce((n,p) => n + Number(p.points || 0), 0);
-  $("#stat-completions").textContent = completions ?? "—";
-  $("#stat-points").textContent = totalPoints.toLocaleString();
+  const { data: stats, error: statsError } = await supabase.rpc("wcl_public_stats");
+  if (!statsError && stats?.[0]) {
+    const s = stats[0];
+    $("#stat-levels").textContent = Number(s.level_count).toLocaleString();
+    $("#stat-players").textContent = Number(s.player_count).toLocaleString();
+    $("#stat-completions").textContent = Number(s.completion_count).toLocaleString();
+    $("#stat-points").textContent = Number(s.points_total).toLocaleString();
+  }
 }
 function empty(title, description) { return '<div class="empty-state"><b>' + escapeHtml(title) + '</b><span>' + escapeHtml(description || "") + '</span></div>'; }
 function renderStats() {
