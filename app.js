@@ -218,7 +218,7 @@ async function loadMySubmissions() {
   if (!state.session) { $("#my-submissions").innerHTML = empty("Sign in to track submissions", "Your level suggestions and completion proofs appear here."); return; }
   const [levels, runs] = await Promise.all([
     supabase.from("level_submissions").select("id,name,status,review_note,created_at").eq("submitter_id",state.session.user.id).order("created_at",{ascending:false}),
-    supabase.from("completion_submissions").select("id,level_id,proof_url,status,points_awarded,review_note,created_at,levels(name)").eq("submitter_id",state.session.user.id).order("created_at",{ascending:false})
+    supabase.from("completion_submissions").select("id,level_id,proof_url,verification_submission_id,status,points_awarded,review_note,created_at,levels(name)").eq("submitter_id",state.session.user.id).order("created_at",{ascending:false})
   ]);
   if(levels.error) throw levels.error;if(runs.error) throw runs.error;
   const status = s => '<span class="review-status status-' + escapeHtml(s) + '">' + escapeHtml(s) + '</span>';
