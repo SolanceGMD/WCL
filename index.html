@@ -10,7 +10,7 @@
   <title>WCL — Wave Challenge List</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="pointercrate.css?v=20261024">
+  <link rel="stylesheet" href="pointercrate.css?v=20261025">
   <script>window.WCL_CONFIG={supabaseUrl:"https://xvdinlyertutpddeilvq.supabase.co",supabaseKey:"sb_publishable_J0xpFgrZCYfTFY15AsHAFA_QYjZzyMB"};</script>
   <script type="module" src="app.js"></script>
 </head>
@@ -19,7 +19,7 @@
     <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
     <header class="topbar">
       <a class="brand" href="#top" aria-label="WCL home"><span class="brand-mark"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span><span class="brand-copy">WCL<span class="brand-period">.</span><small>WAVE CHALLENGE LIST</small></span></a>
-      <nav class="main-nav" id="main-nav" aria-label="Main navigation"><a class="nav-link active" href="index.html">List</a><a class="nav-link" href="rankings.html">Rankings</a><a class="nav-link" href="submissions.html">Submissions</a><a class="nav-link" href="about.html">About</a><a class="nav-link hidden" href="#admin" data-tab="Admin" id="admin-nav">Admin</a></nav>
+      <nav class="main-nav" id="main-nav" aria-label="Main navigation"><a class="nav-link active" href="#view-levels" data-tab="Levels" aria-current="page">List</a><a class="nav-link" href="#view-rankings" data-tab="Rankings">Rankings</a><a class="nav-link" href="#view-submissions" data-tab="Submissions">Submissions</a><a class="nav-link" href="#view-about" data-tab="About">About</a><a class="nav-link" href="#view-settings" data-tab="Settings">⚙ Settings</a><a class="nav-link hidden" href="#view-admin" data-tab="Admin" id="admin-nav">Admin</a></nav>
       <div class="top-actions"><button class="button button-ghost login-button" id="auth-button">Sign in</button><button class="button button-primary header-submit" id="submit-level-top">＋ Submit level</button><button class="icon-button mobile-menu" id="mobile-menu" aria-label="Toggle menu">☰</button></div>
     </header>
     <main id="top">
@@ -36,6 +36,18 @@
       <section id="view-rankings" class="challenge-section alternate-section hidden"><div class="section-heading"><div><div class="eyebrow section-eyebrow">THE PLAYERS TO BEAT</div><h2>Community rankings</h2><p>Points are awarded after a completion is approved by moderators.</p></div><button class="text-link" id="refresh-rankings">↻ Refresh</button></div><div class="leaderboard" id="leaderboard"><div class="empty-state"><b>Loading rankings…</b></div></div><div class="notice">ⓘ Rankings use verified points from approved completion submissions.</div></section>
       <section id="view-submissions" class="challenge-section alternate-section hidden"><div class="section-heading"><div><div class="eyebrow section-eyebrow">HELP BUILD THE LIST</div><h2>Community submissions</h2><p>Submit a challenge for review, or send proof of your completed run.</p></div></div><div class="submission-cards"><button class="submission-card" id="submit-level-card"><span class="submission-icon">＋</span><h3>Submit a level</h3><p>Suggest a Geometry Dash wave challenge with its creator, description, difficulty, points, and YouTube showcase. A moderator reviews it before publication.</p><span class="text-link">Start a level submission ↗</span></button><button class="submission-card" id="submit-completion-card"><span class="submission-icon green">✓</span><h3>Submit a completion</h3><p>Share your proof video for a listed challenge. Approved completions earn the level's points, and duplicate awards are blocked.</p><span class="text-link">Submit proof video ↗</span></button></div><div id="my-submissions" class="my-submissions"></div></section>
       <section id="view-about" class="challenge-section alternate-section hidden"><div class="section-heading"><div><div class="eyebrow section-eyebrow">ABOUT THE PROJECT</div><h2>Built for the wave community</h2><p>Clear rules. Verified completions. Community-driven challenge discovery.</p></div></div><div class="about-grid"><div><span>⌕</span><h3>Find your next challenge</h3><p>Search and filter the list by difficulty, creator, and points. Each listing can include a YouTube showcase.</p></div><div><span>✓</span><h3>Proof before points</h3><p>Completion proof is reviewed by authorized moderators. Points are only awarded after approval, not on submission.</p></div><div><span>♜</span><h3>Accountable moderation</h3><p>Granular moderator permissions, reversible level removal, user bans, and an audit history keep moderation transparent.</p></div></div></section>
+      <section id="view-settings" class="challenge-section alternate-section hidden">
+        <div class="section-heading"><div><div class="eyebrow section-eyebrow">YOUR EXPERIENCE</div><h2>Settings</h2><p>Personalize the challenge list. These preferences are saved in this browser and do not change other players’ settings.</p></div></div>
+        <div class="settings-panel">
+          <label class="field-label settings-sort-field">Default challenge order
+            <select id="settings-sort"><option value="rank">Official placement</option><option value="points">Points: high to low</option><option value="name">Name: A–Z</option><option value="newest">Recently added</option></select>
+            <small>Also updates the sort selector above the challenge list.</small>
+          </label>
+          <label class="settings-toggle"><span><b>Compact challenge rows</b><small>Show more levels on screen at once.</small></span><input id="settings-compact" type="checkbox"></label>
+          <label class="settings-toggle"><span><b>Show level IDs in the list</b><small>Display a short ID beside each level, with a button to copy its full ID.</small></span><input id="settings-show-ids" type="checkbox" checked></label>
+          <div class="settings-footer"><p>Every level’s full ID is also available in its details panel.</p><button class="button button-outline" id="reset-settings" type="button">Reset to defaults</button></div>
+        </div>
+      </section>
       <section id="view-admin" class="challenge-section alternate-section hidden"><div class="section-heading"><div><div class="eyebrow section-eyebrow">STAFF AREA</div><h2>Moderation dashboard</h2><p>Review queues, edit challenge data, manage roles and bans, and inspect audit events.</p></div><button class="text-link" id="refresh-admin">↻ Refresh queue</button></div><div id="admin-content"><div class="empty-state"><b>Checking permissions…</b></div></div></section>
       <section class="bottom-cta"><div class="cta-orb">ϟ</div><div><h2>Your next personal best starts here.</h2><p>Find a challenge, upload your proof, and earn your place on the board.</p></div><button class="button button-primary" id="cta-submit">Get started ↗</button></section>
     </main>

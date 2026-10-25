@@ -4,7 +4,14 @@ const cfg = window.WCL_CONFIG || {};
 const supabase = cfg.supabaseUrl && cfg.supabaseKey ? createClient(cfg.supabaseUrl, cfg.supabaseKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }) : null;
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-const state = { session: null, profile: null, role: null, levels: [], rankings: [], activeTab: "Levels", adminTab: "queue", detailLevel: null, permissions: {} };
+const defaultSettings = { sort: "rank", compact: false, showIds: true };
+const readSettings = () => {
+  try {
+    const stored = JSON.parse(localStorage.getItem("wcl-settings") || "{}");
+    return { sort: ["rank", "points", "name", "newest"].includes(stored.sort) ? stored.sort : "rank", compact: stored.compact === true, showIds: stored.showIds !== false };
+  } catch { return { ...defaultSettings }; }
+};
+const state = { session: null, profile: null, role: null, levels: [], rankings: [], activeTab: "Levels", adminTab: "queue", detailLevel: null, permissions: {}, settings: readSettings() };
 const difficultyClass = value => ({ Extreme: "extreme", Insane: "insane", Hard: "hard", Medium: "medium", Easy: "medium", Unrated: "" }[value] || "");
 const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const youtubeId = value => { try { const u = new URL(value); if (u.hostname.endsWith("youtu.be")) return u.pathname.slice(1).split("/")[0]; return u.searchParams.get("v") || u.pathname.match(/\/(?:embed|shorts)\/([^/?]+)/)?.[1] || ""; } catch { return ""; } };
@@ -47,7 +54,7 @@ function renderIdentity() {
 async function loadLevels() {
   if (!supabase) { indicator("Backend not configured", false); $("#level-rows").innerHTML = empty("Backend setup required", "The site is live as static HTML. Connect Supabase to load community data."); return; }
   indicator("Syncing WCL");
-  const { data, error } = await supabase.from("levels").select("id,name,creator,description,points,difficulty,length,youtube_url,thumbnail_url,status,created_at,updated_at").eq("status", "published").order("points", { ascending: false });
+  const { data, error } = await supabase.from("levels").select("id,name,creator,description,points,difficulty,length,youtube_url,thumbnail_url,status,sort_order,created_at,updated_at").eq("status", "published").order("sort_order", { ascending: true }).order("points", { ascending: false }).order("created_at", { ascending: true });
   if (error) throw error;
   state.levels = data || [];
   renderLevels(); renderStats(); indicator("Connected to WCL");
@@ -72,20 +79,23 @@ function renderLevels() {
   const search = ($("#level-search").value || "").trim().toLowerCase();
   const diff = $("#difficulty-filter").value;
   const sort = $("#sort-filter").value;
-  let rows = state.levels.filter(l => (l.name + " " + l.creator).toLowerCase().includes(search) && (diff === "All difficulties" || l.difficulty === diff));
-  if (sort === "points") rows.sort((a,b) => b.points-a.points);
-  else if (sort === "name") rows.sort((a,b) => a.name.localeCompare(b.name));
-  else if (sort === "newest") rows.sort((a,b) => new Date(b.created_at)-new Date(a.created_at));
-  else rows.sort((a,b) => b.points-a.points);
+  let rows = state.levels.filter(l => (String(l.name || "") + " " + String(l.creator || "")).toLowerCase().includes(search) && (diff === "All difficulties" || l.difficulty === diff));
+  if (sort === "points") rows.sort((a,b) => Number(b.points || 0)-Number(a.points || 0) || Number(a.sort_order || 0)-Number(b.sort_order || 0));
+  else if (sort === "name") rows.sort((a,b) => String(a.name || "").localeCompare(String(b.name || "")));
+  else if (sort === "newest") rows.sort((a,b) => new Date(b.created_at || 0)-new Date(a.created_at || 0));
+  else rows.sort((a,b) => Number(a.sort_order || 0)-Number(b.sort_order || 0) || Number(b.points || 0)-Number(a.points || 0) || new Date(a.created_at || 0)-new Date(b.created_at || 0));
+  $("#level-rows").classList.toggle("compact-list", state.settings.compact);
   $("#level-count").textContent = rows.length;
   $("#list-footer-count").innerHTML = 'Showing <b>' + rows.length + '</b> of <b>' + state.levels.length + '</b> published challenges';
   if (!rows.length) { $("#level-rows").innerHTML = empty("No challenges found", state.levels.length ? "Try a different search or difficulty filter." : "Be the first to submit a challenge."); return; }
+  const colors = ["", "thumb-blue", "thumb-pink", "thumb-green", "thumb-orange", "thumb-cyan"];
   $("#level-rows").innerHTML = rows.map((l,i) => {
-    const thumb = thumbnail(l.youtube_url);
-    const colors = ["", "thumb-blue", "thumb-pink", "thumb-green", "thumb-orange", "thumb-cyan"];
-    return '<article class="level-row"><div class="level-main"><span class="rank-number ' + (i<3 ? "rank-top" : "") + '">' + String(i+1).padStart(2,"0") + '</span><div class="level-thumb ' + colors[i%colors.length] + '">' + (thumb ? '<img src="' + escapeHtml(thumb) + '" alt="" loading="lazy" onerror="this.remove()">' : '<span class="thumb-mesh"></span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h4l3-7 4 14 3-7h2"/></svg>') + '</div><div class="level-info"><h3>' + escapeHtml(l.name) + '</h3><span>by <b>' + escapeHtml(l.creator) + '</b><i class="meta-dot"></i>' + escapeHtml(l.length || "Unrated") + '</span></div></div><div><span class="difficulty-pill ' + difficultyClass(l.difficulty) + '"><span></span>' + escapeHtml(l.difficulty) + '</span></div><div class="points-value">' + Number(l.points).toLocaleString() + ' <small>pts</small></div><div><span class="status-verified">✓ Verified</span></div><button class="row-arrow" data-level="' + l.id + '" aria-label="View ' + escapeHtml(l.name) + '">↗</button></article>';
+    const thumb = thumbnail(l.youtube_url), levelId = String(l.id || "");
+    const idMarkup = state.settings.showIds ? '<span class="level-id">ID <code>' + escapeHtml(levelId.slice(0,8)) + '</code><button type="button" class="copy-level-id" data-copy-level-id="' + escapeHtml(levelId) + '" aria-label="Copy full ID for ' + escapeHtml(l.name) + '" title="Copy full level ID">Copy</button></span>' : "";
+    return '<article class="level-row"><div class="level-main"><span class="rank-number ' + (i<3 ? "rank-top" : "") + '">' + String(i+1).padStart(2,"0") + '</span><div class="level-thumb ' + colors[i%colors.length] + '">' + (thumb ? '<img src="' + escapeHtml(thumb) + '" alt="" loading="lazy" onerror="this.remove()">' : '<span class="thumb-mesh"></span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h4l3-7 4 14 3-7h2"/></svg>') + '</div><div class="level-info"><h3>' + escapeHtml(l.name) + '</h3><span>by <b>' + escapeHtml(l.creator) + '</b><i class="meta-dot"></i>' + escapeHtml(l.length || "Unrated") + '</span>' + idMarkup + '</div></div><div><span class="difficulty-pill ' + difficultyClass(l.difficulty) + '"><span></span>' + escapeHtml(l.difficulty || "Unrated") + '</span></div><div class="points-value">' + Number(l.points || 0).toLocaleString() + ' <small>pts</small></div><div><span class="status-verified">✓ Verified</span></div><button class="row-arrow" data-level="' + escapeHtml(levelId) + '" aria-label="View ' + escapeHtml(l.name) + '">↗</button></article>';
   }).join("");
   $$("[data-level]").forEach(button => button.addEventListener("click", () => openLevel(button.dataset.level)));
+  $$("[data-copy-level-id]").forEach(button => button.addEventListener("click", () => copyLevelId(button.dataset.copyLevelId)));
 }
 function renderRankings() {
   if (!state.rankings.length) { $("#leaderboard").innerHTML = empty("No players yet", "Create an account and start earning points."); return; }
@@ -93,11 +103,13 @@ function renderRankings() {
 }
 function switchTab(tab) {
   state.activeTab = tab;
-  $$(".nav-link[data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
-  ["Levels","Rankings","Submissions","About","Admin"].forEach(name => $("#view-" + name.toLowerCase()).classList.toggle("hidden", name !== tab));
+  $$(".nav-link[data-tab]").forEach(b => { const active = b.dataset.tab === tab; b.classList.toggle("active", active); if (active) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+  ["Levels","Rankings","Submissions","About","Settings","Admin"].forEach(name => { const section = $("#view-" + name.toLowerCase()); if (section) section.classList.toggle("hidden", name !== tab); });
   $("#main-nav").classList.remove("nav-open");
+  if (tab === "Settings") renderSettings();
   if (tab === "Admin") loadAdmin().catch(showError);
   if (tab === "Submissions") loadMySubmissions().catch(showError);
+  const target = $("#view-" + tab.toLowerCase()); if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 function openAuth(mode = "signin") {
   const signup = mode === "signup";
@@ -140,11 +152,27 @@ function openAccount() {
   modal('<button class="icon-button modal-close" aria-label="Close">×</button><div class="modal-icon">♙</div><div class="eyebrow section-eyebrow">YOUR ACCOUNT</div><h2>' + escapeHtml(state.profile?.gd_username || "Player") + '</h2><p class="modal-description">' + escapeHtml(state.session.user.email || "") + '<br>Member since ' + fmtDate(state.profile?.created_at) + '</p><div class="about-grid"><div><h3>Points</h3><p>' + Number(state.profile?.points||0).toLocaleString() + '</p></div><div><h3>Role</h3><p>' + escapeHtml(state.role?.role || "player") + '</p></div></div>' + (state.role?.banned_at ? '<p class="notice">Account banned: ' + escapeHtml(state.role.ban_reason || "No reason provided") + '</p>' : '') + '<button class="button button-outline modal-submit" id="signout-button">Sign out</button>');
   $("#signout-button").onclick = async () => { const {error}=await supabase.auth.signOut(); if(error) return showError(error); state.session=null;state.profile=null;state.role=null;closeModal();renderIdentity();await loadLevels();toast("Signed out."); };
 }
+async function copyLevelId(id) {
+  const value = String(id || "");
+  if (!value) return toast("No level ID is available to copy.", true);
+  try {
+    if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(value);
+    else {
+      const field = document.createElement("textarea");
+      field.value = value; field.setAttribute("readonly", ""); field.style.position = "fixed"; field.style.opacity = "0";
+      document.body.appendChild(field); field.select();
+      const copied = document.execCommand("copy"); field.remove();
+      if (!copied) throw new Error("Clipboard access is unavailable in this browser.");
+    }
+    toast("Level ID copied.");
+  } catch (error) { showError(error, "Could not copy the level ID. Select and copy it manually."); }
+}
 function openLevel(id) {
-  const l = state.levels.find(x => x.id === id); if (!l) return;
+  const l = state.levels.find(x => String(x.id) === String(id)); if (!l) return;
   state.detailLevel = l;
   const thumb = thumbnail(l.youtube_url);
-  modal('<button class="icon-button modal-close" aria-label="Close">×</button>' + (thumb ? '<img class="detail-image" src="' + escapeHtml(thumb) + '" alt="" onerror="this.style.display=\'none\'">' : '<div class="modal-icon">ϟ</div>') + '<div class="eyebrow section-eyebrow">WAVE CHALLENGE</div><h2>' + escapeHtml(l.name) + '</h2><p class="modal-description">Created by <b>' + escapeHtml(l.creator) + '</b> · ' + escapeHtml(l.difficulty) + ' · ' + escapeHtml(l.length || "Unrated") + '</p><p class="detail-description">' + escapeHtml(l.description || "No description provided.") + '</p><div class="detail-reward">' + Number(l.points).toLocaleString() + ' <small>points on approved completion</small></div>' + youtubeLink(l.youtube_url) + '<button class="button button-primary modal-submit" id="prove-level">Submit completion proof</button>');
+  modal('<button class="icon-button modal-close" aria-label="Close">×</button>' + (thumb ? '<img class="detail-image" src="' + escapeHtml(thumb) + '" alt="" onerror="this.style.display=\'none\'">' : '<div class="modal-icon">ϟ</div>') + '<div class="eyebrow section-eyebrow">WAVE CHALLENGE</div><h2>' + escapeHtml(l.name) + '</h2><p class="modal-description">Created by <b>' + escapeHtml(l.creator) + '</b> · ' + escapeHtml(l.difficulty || "Unrated") + ' · ' + escapeHtml(l.length || "Unrated") + '</p><div class="level-id-detail"><span>Level ID</span><code>' + escapeHtml(l.id) + '</code><button type="button" class="button button-outline" id="copy-level-id">Copy ID</button></div><p class="detail-description">' + escapeHtml(l.description || "No description provided.") + '</p><div class="detail-reward">' + Number(l.points || 0).toLocaleString() + ' <small>points on approved completion</small></div>' + youtubeLink(l.youtube_url) + '<button class="button button-primary modal-submit" id="prove-level">Submit completion proof</button>');
+  $("#copy-level-id").onclick = () => copyLevelId(l.id);
   $("#prove-level").onclick = () => openCompletion(l.id);
 }
 function openLevelSubmission() {
@@ -230,15 +258,31 @@ async function reviewRun(id,status) {
 }
 async function renderAdminLevels() {
   if(!hasPermission("levels.manage")){$("#admin-panel").innerHTML=empty("Missing permission","Your account does not have levels.manage.");return;}
-  const {data,error}=await supabase.from("levels").select("*").order("created_at",{ascending:false});if(error)throw error;
-  $("#admin-panel").innerHTML='<div class="admin-toolbar"><p class="modal-description">Edit point rewards, difficulty and YouTube links. Remove is reversible; removed levels can be restored.</p><button class="button button-primary" id="new-level-admin">＋ Add level</button></div>'+data.map(l=>'<article class="admin-card"><div><b>'+escapeHtml(l.name)+'</b><small>'+escapeHtml(l.creator)+' · '+Number(l.points)+' pts · '+escapeHtml(l.status)+'</small>'+(l.youtube_url?youtubeLink(l.youtube_url):'')+'</div><div class="admin-actions"><button class="button button-outline" data-edit-level="'+l.id+'">Edit</button><button class="button button-outline" data-toggle-level="'+l.id+'" data-status="'+l.status+'">'+(l.status==="published"?"Remove":"Restore")+'</button></div></article>').join("")||empty("No levels","Approved or add a level to start the list.");
+  const {data,error}=await supabase.from("levels").select("*").order("sort_order",{ascending:true}).order("points",{ascending:false}).order("created_at",{ascending:true});if(error)throw error;
+  const levels=data||[];
+  $("#admin-panel").innerHTML='<div class="admin-toolbar"><p class="modal-description">Use the arrows to set the official challenge-list order. IDs are stable and can be copied for references. Remove is reversible; removed levels can be restored.</p><button class="button button-primary" id="new-level-admin">＋ Add level</button></div>'+levels.map((l,i)=>'<article class="admin-card placement-card"><div><b>'+escapeHtml(l.name)+'</b><small>Position #'+(i+1)+' · '+escapeHtml(l.creator)+' · '+Number(l.points||0)+' pts · '+escapeHtml(l.status)+'</small><small class="admin-level-id">ID: <code>'+escapeHtml(l.id)+'</code><button type="button" class="copy-level-id" data-copy-level-id="'+escapeHtml(l.id)+'">Copy ID</button></small>'+(l.youtube_url?youtubeLink(l.youtube_url):'')+'</div><div class="admin-actions placement-actions"><button class="button button-outline" data-move-level="'+escapeHtml(l.id)+'" data-direction="-1" '+(i===0?'disabled':'')+' aria-label="Move '+escapeHtml(l.name)+' up" title="Move up">↑ Up</button><button class="button button-outline" data-move-level="'+escapeHtml(l.id)+'" data-direction="1" '+(i===levels.length-1?'disabled':'')+' aria-label="Move '+escapeHtml(l.name)+' down" title="Move down">↓ Down</button><button class="button button-outline" data-edit-level="'+escapeHtml(l.id)+'">Edit</button><button class="button button-outline" data-toggle-level="'+escapeHtml(l.id)+'" data-status="'+escapeHtml(l.status)+'">'+(l.status==="published"?"Remove":"Restore")+'</button></div></article>').join("")||empty("No levels","Approve or add a level to start the list.");
   $("#new-level-admin").onclick=()=>editLevel(null);
-  $$("[data-edit-level]").forEach(b=>b.onclick=()=>editLevel(data.find(l=>l.id===b.dataset.editLevel)));
-  $$("[data-toggle-level]").forEach(b=>b.onclick=async()=>{const next=b.dataset.status==="published"?"removed":"published";const {error}=await supabase.from("levels").update({status:next,updated_at:new Date().toISOString()}).eq("id",b.dataset.toggleLevel);if(error)return showError(error);toast("Level "+next+".");await loadAdmin();await loadLevels();});
+  $$("#admin-panel [data-edit-level]").forEach(b=>b.onclick=()=>editLevel(levels.find(l=>String(l.id)===b.dataset.editLevel)));
+  $$("#admin-panel [data-copy-level-id]").forEach(b=>b.onclick=()=>copyLevelId(b.dataset.copyLevelId));
+  $$("#admin-panel [data-move-level]").forEach(b=>b.onclick=()=>moveAdminLevel(b.dataset.moveLevel,Number(b.dataset.direction)).catch(showError));
+  $$("#admin-panel [data-toggle-level]").forEach(b=>b.onclick=async()=>{const next=b.dataset.status==="published"?"removed":"published";const {error}=await supabase.from("levels").update({status:next,updated_at:new Date().toISOString()}).eq("id",b.dataset.toggleLevel);if(error)return showError(error);toast("Level "+next+".");await loadAdmin();await loadLevels();});
+}
+async function moveAdminLevel(id, direction) {
+  if(!hasPermission("levels.manage")) return toast("Missing permission: levels.manage.",true);
+  const {data,error}=await supabase.from("levels").select("id,sort_order,points,created_at").order("sort_order",{ascending:true}).order("points",{ascending:false}).order("created_at",{ascending:true});
+  if(error)throw error;
+  const ordered=data||[], from=ordered.findIndex(l=>String(l.id)===String(id)), to=from+direction;
+  if(from<0||to<0||to>=ordered.length)return;
+  [ordered[from],ordered[to]]=[ordered[to],ordered[from]];
+  const {error:reorderError}=await supabase.rpc("wcl_reorder_levels",{p_level_ids:ordered.map(l=>l.id)});
+  if(reorderError)throw reorderError;
+  toast("Challenge placement updated.");
+  await loadAdmin();
+  await loadLevels();
 }
 function editLevel(l) {
   modal('<button class="icon-button modal-close" aria-label="Close">×</button><div class="eyebrow section-eyebrow">LEVEL MANAGEMENT</div><h2>'+(l?"Edit challenge":"Add challenge")+'</h2><form id="edit-level-form"><label class="field-label">Level name<input name="name" required maxlength="100" value="'+escapeHtml(l?.name||"")+'"></label><label class="field-label">Creator<input name="creator" required maxlength="80" value="'+escapeHtml(l?.creator||"")+'"></label><label class="field-label">Description<textarea name="description" rows="3" maxlength="2000">'+escapeHtml(l?.description||"")+'</textarea></label><div class="form-grid"><label class="field-label">Points<input type="number" name="points" min="0" max="1000000" required value="'+Number(l?.points||0)+'"></label><label class="field-label">Difficulty<select name="difficulty">'+["Unrated","Easy","Medium","Hard","Insane","Extreme"].map(d=>'<option '+(l?.difficulty===d?"selected":"")+'>'+d+'</option>').join("")+'</select></label></div><div class="form-grid"><label class="field-label">Length<select name="length">'+["Unrated","Short","Medium","Long","XL"].map(d=>'<option '+(l?.length===d?"selected":"")+'>'+d+'</option>').join("")+'</select></label><label class="field-label">Status<select name="status">'+["published","draft","removed"].map(d=>'<option '+((l?.status||"published")===d?"selected":"")+'>'+d+'</option>').join("")+'</select></label></div><label class="field-label">YouTube URL<input type="url" name="youtube_url" value="'+escapeHtml(l?.youtube_url||"")+'"></label><button class="button button-primary modal-submit" type="submit">Save challenge</button></form>');
-  $("#edit-level-form").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.currentTarget),payload={name:String(fd.get("name")).trim(),creator:String(fd.get("creator")).trim(),description:String(fd.get("description")||"").trim(),points:Number(fd.get("points")),difficulty:fd.get("difficulty"),length:fd.get("length"),status:fd.get("status"),youtube_url:String(fd.get("youtube_url")||"").trim()||null,updated_at:new Date().toISOString()};if(payload.youtube_url&&!youtubeId(payload.youtube_url))return toast("Enter a valid YouTube video URL.",true);const result=l?await supabase.from("levels").update(payload).eq("id",l.id):await supabase.from("levels").insert({...payload,created_by:state.session.user.id});if(result.error)return showError(result.error);closeModal();toast("Challenge saved.");await loadAdmin();await loadLevels();};
+  $("#edit-level-form").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.currentTarget),payload={name:String(fd.get("name")).trim(),creator:String(fd.get("creator")).trim(),description:String(fd.get("description")||"").trim(),points:Number(fd.get("points")),difficulty:fd.get("difficulty"),length:fd.get("length"),status:fd.get("status"),youtube_url:String(fd.get("youtube_url")||"").trim()||null,updated_at:new Date().toISOString()};if(payload.youtube_url&&!youtubeId(payload.youtube_url))return toast("Enter a valid YouTube video URL.",true);const result=l?await supabase.from("levels").update(payload).eq("id",l.id):await supabase.from("levels").insert({...payload,sort_order:0,created_by:state.session.user.id});if(result.error)return showError(result.error);closeModal();toast("Challenge saved.");await loadAdmin();await loadLevels();};
 }
 async function renderAdminUsers() {
   if(!hasPermission("users.manage")){$("#admin-panel").innerHTML=empty("Missing permission","Your account does not have users.manage.");return;}
@@ -275,16 +319,35 @@ async function renderAdminAudit() {
   $("#admin-panel").innerHTML='<p class="modal-description">Most recent 100 audited changes.</p>'+(data||[]).map(a=>'<article class="admin-card audit-card"><div><b>'+escapeHtml(a.action.toUpperCase())+' · '+escapeHtml(a.target_type)+'</b><small>'+fmtDate(a.created_at)+' · actor '+escapeHtml(a.actor_id||"system")+' · target '+escapeHtml(a.target_id||"—")+'</small><details><summary>View event details</summary><pre>'+escapeHtml(JSON.stringify(a.details,null,2))+'</pre></details></div></article>').join("")||empty("No audit events","Changes to levels, submissions and user roles will be recorded here.");
 }
 
+function saveSettings() {
+  try { localStorage.setItem("wcl-settings", JSON.stringify(state.settings)); }
+  catch (error) { console.warn("Could not persist WCL settings in this browser.", error); }
+}
+function renderSettings() {
+  const sort = $("#settings-sort"), compact = $("#settings-compact"), showIds = $("#settings-show-ids");
+  if (sort) sort.value = state.settings.sort;
+  if (compact) compact.checked = state.settings.compact;
+  if (showIds) showIds.checked = state.settings.showIds;
+  const listSort = $("#sort-filter");
+  if (listSort) listSort.value = state.settings.sort;
+  $("#level-rows")?.classList.toggle("compact-list", state.settings.compact);
+}
 function wire() {
-  $$(".nav-link[data-tab]").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
+  $$(".nav-link[data-tab]").forEach(b=>b.addEventListener("click",e=>{e.preventDefault();switchTab(b.dataset.tab);}));
   $("#mobile-menu").onclick=()=>$("#main-nav").classList.toggle("nav-open");
   $("#auth-button").onclick=openAccount;$("#footer-auth").onclick=openAccount;
   $("#submit-level-top").onclick=openLevelSubmission;$("#submit-level-hero").onclick=openLevelSubmission;$("#submit-level-card").onclick=openLevelSubmission;$("#submit-completion-card").onclick=()=>openCompletion();$("#submit-completion-footer").onclick=()=>openCompletion();$("#cta-submit").onclick=()=>state.session?openLevelSubmission():openAuth("signup");
-  $("#explore-button").onclick=()=>{$("#view-levels").scrollIntoView({behavior:"smooth"});switchTab("Levels");};
-  $("#level-search").addEventListener("input",renderLevels);$("#difficulty-filter").addEventListener("change",renderLevels);$("#sort-filter").addEventListener("change",renderLevels);
+  $("#explore-button").onclick=()=>switchTab("Levels");
+  $("#level-search").addEventListener("input",renderLevels);$("#difficulty-filter").addEventListener("change",renderLevels);
+  $("#sort-filter").addEventListener("change",()=>{state.settings.sort=$("#sort-filter").value;saveSettings();renderSettings();renderLevels();});
+  $("#settings-sort").addEventListener("change",()=>{state.settings.sort=$("#settings-sort").value;saveSettings();renderSettings();renderLevels();});
+  $("#settings-compact").addEventListener("change",()=>{state.settings.compact=$("#settings-compact").checked;saveSettings();renderSettings();renderLevels();});
+  $("#settings-show-ids").addEventListener("change",()=>{state.settings.showIds=$("#settings-show-ids").checked;saveSettings();renderSettings();renderLevels();});
+  $("#reset-settings").onclick=()=>{state.settings={...defaultSettings};saveSettings();renderSettings();renderLevels();toast("Settings reset to defaults.");};
   $("#refresh-levels").onclick=()=>loadLevels().catch(showError);$("#refresh-rankings").onclick=()=>loadLevels().catch(showError);$("#refresh-admin").onclick=()=>loadAdmin().catch(showError);
   $("#level-search").addEventListener("keydown",e=>{if(e.key==="Escape"){e.target.value="";renderLevels();}});
   document.addEventListener("keydown",e=>{if(e.key==="/"&&!/input|textarea|select/i.test(document.activeElement.tagName)){e.preventDefault();$("#level-search").focus();}if(e.key==="Escape")closeModal();});
+  renderSettings();
 }
 async function boot() {
   wire();

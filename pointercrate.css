@@ -244,3 +244,33 @@ main { max-width: 1200px; }
 .ranking-table .empty-state{padding:28px 20px;margin:0;line-height:1.7}
 @media(max-width:760px){.standalone-header{padding:12px 16px;flex-wrap:wrap;gap:12px}.standalone-nav{order:3;width:100%;justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap}.standalone-nav a{white-space:nowrap}.standalone-back{margin-left:auto}.page-main{width:calc(100% - 24px);margin:12px auto;padding:22px 16px}.rankings-heading{align-items:flex-start;flex-direction:column}.rankings-heading #refresh{width:100%}.rankings-summary{align-items:flex-start;flex-direction:column}.summary-note{white-space:normal}.ranking-row{grid-template-columns:42px minmax(0,1fr);gap:10px;padding:12px}.ranking-row strong{grid-column:2;justify-self:start}.ranking-row .place{width:34px;height:34px;grid-row:span 2}.page-actions .button{flex:1 1 100%}}
 @media(max-width:390px){.standalone-brand{font-size:18px}.standalone-back{font-size:11px;padding:9px 10px}.ranking-row b{font-size:13px}}
+
+
+/* Settings, stable level IDs and admin-controlled placements */
+.level-info .level-id{display:flex;align-items:center;gap:5px;margin-top:5px;color:#5c6b80;font-size:9px;white-space:normal;line-height:1.35}
+.level-info .level-id code{padding:2px 5px;border-radius:4px;background:#edf3fc;color:#244f91;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:9px}
+.copy-level-id{display:inline-flex;align-items:center;justify-content:center;border:1px solid #cbd5e2;border-radius:5px;background:#fff;color:#28589b;padding:3px 6px;font-size:9px;font-weight:700;cursor:pointer}
+.copy-level-id:hover{background:#edf3fc;border-color:#9cb7dd}
+.level-id-detail{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;margin:16px 0;padding:12px;border:1px solid #d8e0ea;border-radius:8px;background:#f7f9fc}
+.level-id-detail>span{font-size:11px;font-weight:700;color:#40536d}
+.level-id-detail code{min-width:0;overflow-wrap:anywhere;color:#244f91;font-size:11px}
+.level-id-detail .button{padding:7px 9px;font-size:10px}
+#level-rows.compact-list .level-row{min-height:57px}
+#level-rows.compact-list .level-row .level-thumb{width:34px;height:34px}
+#level-rows.compact-list .level-info h3{margin-bottom:3px}
+#level-rows.compact-list .level-info .level-id{margin-top:2px}
+.settings-panel{max-width:780px;padding:24px;background:#fff;border:1px solid #d5deea;border-radius:10px;box-shadow:0 1px 2px #172b4908}
+.settings-sort-field{max-width:430px;margin-bottom:20px}
+.settings-sort-field small{color:#5c6b80;font-size:11px;font-weight:400;line-height:1.6}
+.settings-toggle{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:17px 0;border-top:1px solid #e4eaf2;cursor:pointer}
+.settings-toggle span{display:flex;flex-direction:column;gap:5px}
+.settings-toggle b{color:#1d2b42;font-size:13px}
+.settings-toggle small{color:#5c6b80;font-size:11px;line-height:1.6;font-weight:400}
+.settings-toggle input{width:18px;height:18px;flex-shrink:0;accent-color:#315fa8}
+.settings-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:12px;padding-top:16px;border-top:1px solid #e4eaf2}
+.settings-footer p{margin:0;color:#5c6b80;font-size:11px;line-height:1.6}
+.placement-card .admin-level-id{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.placement-card .admin-level-id code{font-size:10px;overflow-wrap:anywhere;color:#40536d}
+.placement-actions .button:disabled{opacity:.38;cursor:not-allowed;transform:none}
+.placement-actions .button{white-space:nowrap}
+@media(max-width:680px){.settings-panel{padding:18px 15px}.settings-toggle{align-items:flex-start}.level-id-detail{grid-template-columns:1fr auto}.level-id-detail code{grid-column:1/-1;grid-row:2}.placement-card .admin-level-id code{max-width:100%}}
