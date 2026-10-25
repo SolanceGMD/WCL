@@ -258,7 +258,7 @@ async function reviewLevel(id,status,points=0) {
   if(status==="rejected"&&note===null)return;
   const {error}=await supabase.rpc("wcl_review_level_submission",{p_submission_id:id,p_status:status,p_points:status==="approved"?points:0,p_note:note||null});
   if(error)return showError(error);
-  toast(status==="approved"?"Level approved. The selected verifier's run and points have been recorded.":"Level submission rejected.");await loadAdmin();await loadLevels();await loadIdentity();
+  toast(status==="approved"?"Level approved. Rewards are only recorded when a verifier was selected.":"Level submission rejected.");await loadAdmin();await loadLevels();await loadIdentity();
 }
 async function reviewRun(id,status) {
   if(!hasPermission("submissions.review"))return toast("Missing review permission.",true);
